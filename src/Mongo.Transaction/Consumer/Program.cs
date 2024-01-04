@@ -1,40 +1,24 @@
-var builder = WebApplication.CreateBuilder(args);
+using Confluent.Kafka;
 
-_ = builder.Services.AddEndpointsApiExplorer();
-_ = builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
+var config = new ConsumerConfig
 {
-    _ = app.UseSwagger();
-    _ = app.UseSwaggerUI();
-}
-
-_ = app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    BootstrapServers = "172.17.208.1:9094",
+    GroupId = "transaction-consumer-group",
+    AutoOffsetReset = AutoOffsetReset.Earliest
 };
 
-_ = app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateTime.Now.AddDays(index),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
 
-app.Run();
-
-internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
+while (true)
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    consumer.Subscribe("transaction");
+    try
+    {
+        var consumeResult = consumer.Consume();
+        Console.WriteLine($"Consumed message: {consumeResult.Message.Value}");
+    }
+    catch (ConsumeException ex)
+    {
+        Console.WriteLine($"Error consuming message: {ex.Message}");
+    }
 }
