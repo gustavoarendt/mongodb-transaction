@@ -15,7 +15,7 @@ if (app.Environment.IsDevelopment())
 
 _ = app.UseHttpsRedirection();
 
-_ = app.MapPost("/transaction/create", async (TransactionInputModel model) =>
+_ = app.MapPost("/create", async (TransactionInputModel model) =>
 {
     var transaction = TransactionInputModel.CreateTransaction(model.Description, model.IsExpense, model.Price);
     await new TransactionProducer().PublishTransactionAsync(transaction, "transaction");

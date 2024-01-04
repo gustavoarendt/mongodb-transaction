@@ -12,7 +12,7 @@ namespace Producer.Transactions
         {
             _config = new ProducerConfig
             {
-                BootstrapServers = "host.docker.internal:9092"
+                BootstrapServers = "172.17.208.1:9094"
             };
         }
 
