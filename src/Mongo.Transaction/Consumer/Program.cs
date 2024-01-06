@@ -5,6 +5,11 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
 var config = new ConsumerConfig
 {
     BootstrapServers = "172.17.208.1:9094",
