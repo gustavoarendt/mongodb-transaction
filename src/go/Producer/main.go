@@ -1,37 +1,38 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 func main() {
-	config := &kafka.ConfigMap{
-		"bootstrap.servers": []interface{}{"127.0.0.1:9092"},
-		"group.id":          "my-producer-group",
+	producer := NewKafkaProducer()
+	Publish("Some transaction converted", "transaction", producer, nil)
+	producer.Flush(1000)
+}
+
+func NewKafkaProducer() *ckafka.Producer {
+	configMap := &ckafka.ConfigMap{
+		"bootstrap.servers": "172.17.208.1:9094",
 	}
 
-	producer, err := kafka.NewProducer(config)
+	p, err := ckafka.NewProducer(configMap)
 	if err != nil {
-		fmt.Println("Failed to create producer:", err)
-		return
+		log.Println(err.Error())
 	}
+	return p
+}
 
-	message := &kafka.Message{
-		TopicPartition: kafka.TopicPartitions{
-			kafka.TopicPartition.Topic: "transaction"
-		}
-		Value:          []byte("Hello, Kafka!"),
+func Publish(msg, topic string, producer *ckafka.Producer, key []byte) error {
+	message := &ckafka.Message{
+		Value:          []byte(msg),
+		TopicPartition: ckafka.TopicPartition{Topic: &topic, Partition: ckafka.PartitionAny},
+		Key:            key,
 	}
-
-	err = producer.Produce(message, nil)
+	err := producer.Produce(message, nil)
 	if err != nil {
-		fmt.Println("Failed to produce message:", err)
-		return
+		return err
 	}
-
-	fmt.Println("Successfully produced message!")
-
-	producer.Close()
+	return nil
 }
